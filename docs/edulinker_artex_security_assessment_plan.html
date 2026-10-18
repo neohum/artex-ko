@@ -1,0 +1,831 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>[보안 계획서] edulinker-project 내부망 모사 및 ARTEX 침투 테스트 계획</title>
+  <!-- Mermaid.js for diagrams -->
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: 'neutral',
+      fontFamily: 'Pretendard, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+    });
+  </script>
+  <style>
+    :root {
+      --primary: #2563eb;
+      --primary-dark: #1d4ed8;
+      --primary-light: #eff6ff;
+      --text-main: #1e293b;
+      --text-muted: #64748b;
+      --bg-page: #f8fafc;
+      --bg-card: #ffffff;
+      --border: #e2e8f0;
+      --critical: #ef4444;
+      --critical-bg: #fef2f2;
+      --high: #f97316;
+      --high-bg: #fff7ed;
+      --medium: #eab308;
+      --medium-bg: #fefce8;
+      --low: #3b82f6;
+      --low-bg: #eff6ff;
+      --code-bg: #0f172a;
+      --code-text: #e2e8f0;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: Pretendard, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background-color: var(--bg-page);
+      color: var(--text-main);
+      line-height: 1.65;
+      -webkit-font-smoothing: antialiased;
+      padding-bottom: 80px;
+    }
+
+    .container {
+      max-width: 1080px;
+      margin: 40px auto;
+      background: var(--bg-card);
+      border-radius: 16px;
+      border: 1px solid var(--border);
+      box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
+      overflow: hidden;
+    }
+
+    header.header {
+      background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+      color: #ffffff;
+      padding: 48px 40px 36px 40px;
+      border-bottom: 4px solid var(--primary);
+      position: relative;
+    }
+
+    .badges-top {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 4px 12px;
+      border-radius: 9999px;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      line-height: 1;
+    }
+
+    .badge-confidential {
+      background: rgba(239, 68, 68, 0.2);
+      color: #fca5a5;
+      border: 1px solid rgba(239, 68, 68, 0.4);
+    }
+
+    .badge-internal {
+      background: rgba(59, 130, 246, 0.2);
+      color: #93c5fd;
+      border: 1px solid rgba(59, 130, 246, 0.4);
+    }
+
+    .badge-stage {
+      background: rgba(16, 185, 129, 0.2);
+      color: #6ee7b7;
+      border: 1px solid rgba(16, 185, 129, 0.4);
+    }
+
+    header h1 {
+      font-size: 28px;
+      font-weight: 800;
+      margin-bottom: 12px;
+      line-height: 1.3;
+      word-break: keep-all;
+    }
+
+    header p.subtitle {
+      font-size: 15px;
+      color: #94a3b8;
+      max-width: 800px;
+    }
+
+    .metadata-bar {
+      margin-top: 24px;
+      padding-top: 20px;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      display: flex;
+      gap: 32px;
+      font-size: 13px;
+      color: #cbd5e1;
+      flex-wrap: wrap;
+    }
+
+    .metadata-item span.label {
+      color: #64748b;
+      margin-right: 6px;
+    }
+
+    .content {
+      padding: 40px;
+    }
+
+    .toc {
+      background: var(--primary-light);
+      border: 1px solid #bfdbfe;
+      border-radius: 12px;
+      padding: 20px 24px;
+      margin-bottom: 40px;
+    }
+
+    .toc h3 {
+      font-size: 16px;
+      color: var(--primary-dark);
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .toc ul {
+      list-style: none;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 8px 16px;
+    }
+
+    .toc a {
+      color: #1e40af;
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .toc a:hover {
+      text-decoration: underline;
+    }
+
+    section {
+      margin-bottom: 48px;
+    }
+
+    h2 {
+      font-size: 22px;
+      font-weight: 700;
+      color: #0f172a;
+      margin-bottom: 20px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    h2 .section-num {
+      background: var(--primary);
+      color: #ffffff;
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    h3 {
+      font-size: 17px;
+      font-weight: 600;
+      color: #334155;
+      margin: 24px 0 12px 0;
+    }
+
+    p {
+      margin-bottom: 14px;
+      color: #334155;
+      font-size: 15px;
+      word-break: keep-all;
+    }
+
+    ul, ol {
+      margin-bottom: 16px;
+      padding-left: 24px;
+      color: #334155;
+      font-size: 15px;
+    }
+
+    li {
+      margin-bottom: 6px;
+    }
+
+    .mermaid-box {
+      background: #fdfdfd;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px;
+      margin: 20px 0;
+      overflow-x: auto;
+      text-align: center;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 20px 0;
+      font-size: 14px;
+    }
+
+    th, td {
+      border: 1px solid var(--border);
+      padding: 12px 14px;
+      text-align: left;
+    }
+
+    th {
+      background-color: #f1f5f9;
+      color: #1e293b;
+      font-weight: 600;
+    }
+
+    tr:nth-child(even) {
+      background-color: #f8fafc;
+    }
+
+    tr:hover {
+      background-color: #f1f5f9;
+    }
+
+    .pill {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 700;
+      line-height: 1.2;
+    }
+
+    .pill-critical {
+      background: var(--critical-bg);
+      color: var(--critical);
+      border: 1px solid #fca5a5;
+    }
+
+    .pill-high {
+      background: var(--high-bg);
+      color: var(--high);
+      border: 1px solid #fdba74;
+    }
+
+    .pill-medium {
+      background: var(--medium-bg);
+      color: #a16207;
+      border: 1px solid #fde047;
+    }
+
+    .pill-low {
+      background: var(--low-bg);
+      color: var(--low);
+      border: 1px solid #93c5fd;
+    }
+
+    pre {
+      background: var(--code-bg);
+      color: var(--code-text);
+      padding: 16px 20px;
+      border-radius: 10px;
+      overflow-x: auto;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 13.5px;
+      margin: 16px 0;
+      line-height: 1.5;
+    }
+
+    code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 13.5px;
+      background: #e2e8f0;
+      color: #0f172a;
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+
+    pre code {
+      background: transparent;
+      color: inherit;
+      padding: 0;
+    }
+
+    .callout {
+      border-left: 4px solid var(--primary);
+      background: var(--primary-light);
+      padding: 16px 20px;
+      border-radius: 0 8px 8px 0;
+      margin: 20px 0;
+      font-size: 14.5px;
+    }
+
+    .callout-warning {
+      border-left-color: var(--high);
+      background: var(--high-bg);
+    }
+
+    .callout-danger {
+      border-left-color: var(--critical);
+      background: var(--critical-bg);
+    }
+
+    .callout strong {
+      display: block;
+      margin-bottom: 4px;
+      color: #0f172a;
+    }
+
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 16px;
+      margin: 20px 0;
+    }
+
+    .stat-card {
+      background: #ffffff;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 18px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+
+    .stat-card h4 {
+      font-size: 14px;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+    }
+
+    .stat-card .val {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--primary-dark);
+    }
+
+    footer {
+      text-align: center;
+      margin-top: 40px;
+      padding-top: 20px;
+      border-top: 1px solid var(--border);
+      color: var(--text-muted);
+      font-size: 13px;
+    }
+
+    @media print {
+      body {
+        background: #ffffff;
+        padding: 0;
+      }
+      .container {
+        box-shadow: none;
+        border: none;
+        margin: 0;
+        max-width: 100%;
+      }
+      .toc {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <header class="header">
+    <div class="badges-top">
+      <span class="badge badge-confidential">🚨 보안 대외비 (STRICTLY CONFIDENTIAL)</span>
+      <span class="badge badge-internal">🔒 내부 격리망 테스트 전용</span>
+      <span class="badge badge-stage">출시 전 보안성 검증 (Pre-release Audit)</span>
+    </div>
+    <h1>[보안 계획서] edulinker-project 내부망 모사 및 ARTEX 기반 자율 침투 테스트 계획</h1>
+    <p class="subtitle">
+      초·중·고 교육 통합 자동화 플랫폼 출시 전 전수 취약점 진단을 위한 내부 격리 네트워크 환경 가상화와 자율 LLM 멀티 에이전트 침투 테스트 종합 실행 계획서
+    </p>
+    <div class="metadata-bar">
+      <div class="metadata-item"><span class="label">대상 시스템:</span> edulinker-project (K-12 Platform)</div>
+      <div class="metadata-item"><span class="label">진단 도구:</span> ARTEX (Autonomous Multi-Agent Pentesting System)</div>
+      <div class="metadata-item"><span class="label">진단 방식:</span> 완전 격리 Docker 환경 (블랙박스 + 그레이박스)</div>
+      <div class="metadata-item"><span class="label">작성 기준일:</span> 2026-10-18</div>
+    </div>
+  </header>
+
+  <div class="content">
+    <!-- 목차 -->
+    <nav class="toc">
+      <h3>📋 목차 바로가기</h3>
+      <ul>
+        <li><a href="#sec-1">1. 개요 및 추진 배경</a></li>
+        <li><a href="#sec-2">2. 점검 대상 시스템 분석</a></li>
+        <li><a href="#sec-3">3. 내부 격리 모사 환경 구축</a></li>
+        <li><a href="#sec-4">4. ARTEX 침투 테스트 설정</a></li>
+        <li><a href="#sec-5">5. 중점 침투 점검 시나리오</a></li>
+        <li><a href="#sec-6">6. 안전 통제 및 리스크 관리</a></li>
+        <li><a href="#sec-7">7. 단계별 추진 로드맵 & 일정</a></li>
+        <li><a href="#sec-8">8. 최종 산출물 및 출시 게이트</a></li>
+      </ul>
+    </nav>
+
+    <!-- 1. 개요 -->
+    <section id="sec-1">
+      <h2><span class="section-num">1</span> 개요 및 추진 배경</h2>
+      <p>
+        <strong>edulinker.io</strong>는 한국 초·중·고등학교를 위한 통합 자동화 플랫폼으로, 메인 허브, 학생 계정 배포(sendipass), 전자서명(sign-school), 가정통신문(gatong) 등 학생·학부모·교사의 민감 정보를 다루는 대규모 서비스입니다.
+      </p>
+      <div class="card-grid">
+        <div class="stat-card">
+          <h4>핵심 검증 목표 1</h4>
+          <div class="val">완전 격리 환경 모사</div>
+          <p style="font-size: 13px; color: #64748b; margin-top: 4px;">운영망 및 외부 인터넷과 100% 분리된 안전한 테스트베드</p>
+        </div>
+        <div class="stat-card">
+          <h4>핵심 검증 목표 2</h4>
+          <div class="val">RBAC / 권한 체계 검증</div>
+          <p style="font-size: 13px; color: #64748b; margin-top: 4px;">학생 계정의 교사 권한 탈취 및 타인 성적·비번 열람 방지</p>
+        </div>
+        <div class="stat-card">
+          <h4>핵심 검증 목표 3</h4>
+          <div class="val">자율 침투(ARTEX) 적용</div>
+          <p style="font-size: 13px; color: #64748b; margin-top: 4px;">LLM 에이전트 기반 공격 표면 정찰 및 제로데이 탐색</p>
+        </div>
+      </div>
+      <div class="callout callout-warning">
+        <strong>⚠️ 법적 및 운영 안전 준수 사항</strong>
+        본 테스트는 서면 승인된 인가 범위 내에서 전용 격리 브리지망에서만 실행되며, 실제 운영 데이터나 개인정보는 절대 사용하지 않고 100% 가상 합성(Faker) 데이터를 사용합니다.
+      </div>
+    </section>
+
+    <!-- 2. 대상 분석 -->
+    <section id="sec-2">
+      <h2><span class="section-num">2</span> 점검 대상 시스템 아키텍처 및 위협 접점</h2>
+      <p>edulinker-project의 주요 컴포넌트와 ARTEX 테스트 엔진 간의 연결 구조는 다음과 같습니다.</p>
+
+      <div class="mermaid-box">
+        <pre class="mermaid">
+flowchart TB
+    subgraph edulinker_Core ["edulinker-project 모사 환경 (격리 내부망)"]
+        MainHub["Main Hub (Next.js 14)<br/>포트 :3000"]
+        Sendipass["Sendipass (계정 배포)<br/>포트 :3002"]
+        APIServer["API Engine (tRPC / Express)<br/>RBAC 세션 미들웨어"]
+        SocketServer["Socket.IO / WebRTC<br/>실시간 알림·메시징"]
+        PostgresDB[(PostgreSQL 16<br/>Prisma ORM)]
+        RedisCache[(Redis 7<br/>세션/캐시)]
+        MockS3[(MinIO S3<br/>Wasabi S3 Mock)]
+        MockMail[Mock SMTP / Mailpit<br/>알림 가상화]
+    end
+
+    subgraph Security_Testing ["ARTEX 침투 테스트 시스템"]
+        ArtexCore["ARTEX Multi-Agent Engine<br/>포트 :8787 / :8788"]
+        ArtexDB[(ARTEX Postgres)]
+        LLMProvider["LLM Engine<br/>(Claude / OpenAI / Local)"]
+    end
+
+    ArtexCore -->|"자율 스캐닝 & 침투 점검"| MainHub
+    ArtexCore -->|"API Fuzzing & 권한 검증"| APIServer
+    ArtexCore -->|"자격증명 탈취 시도"| Sendipass
+    ArtexCore -->|"웹소켓 이벤트 하이재킹"| SocketServer
+    
+    MainHub --> APIServer
+    APIServer --> PostgresDB
+    APIServer --> RedisCache
+    APIServer --> MockS3
+    APIServer --> MockMail
+        </pre>
+      </div>
+
+      <h3>컴포넌트별 상세 스펙 및 위협 접점 매트릭스</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>컴포넌트</th>
+            <th>기술 스택</th>
+            <th>포트</th>
+            <th>주요 기능</th>
+            <th>위협 접점 (Threat Surface)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Main Hub</strong></td>
+            <td>Next.js 14 (App Router)</td>
+            <td><code>3000</code></td>
+            <td>SSO, 통합 대시보드, 권한 라우팅</td>
+            <td>XSS, SSRF, 세션 하이재킹, 인증 우회</td>
+          </tr>
+          <tr>
+            <td><strong>Sendipass</strong></td>
+            <td>Next.js / Node.js</td>
+            <td><code>3002</code></td>
+            <td>학생 임시 비밀번호/계정 안전 배포</td>
+            <td>타인 자격증명 무단 조회 (IDOR), 무차별 대입</td>
+          </tr>
+          <tr>
+            <td><strong>Backend API</strong></td>
+            <td>Express + tRPC</td>
+            <td>내부 연동</td>
+            <td>비즈니스 로직, DB 트랜잭션 처리</td>
+            <td>tRPC 프로시저 인가 누락, SQL/NoSQL Injection</td>
+          </tr>
+          <tr>
+            <td><strong>Realtime Hub</strong></td>
+            <td>Socket.IO</td>
+            <td>내부 연동</td>
+            <td>학급 공지, 실시간 알림, 웹소켓</td>
+            <td>룸(Room) 구독 인가 우회, 메시지 도청</td>
+          </tr>
+          <tr>
+            <td><strong>Database</strong></td>
+            <td>PostgreSQL + Prisma</td>
+            <td><code>5432</code></td>
+            <td>사용자, 학교, 서명 문서, 성적 데이터</td>
+            <td>권한 분리 미비, Mass Assignment 취약점</td>
+          </tr>
+          <tr>
+            <td><strong>Storage</strong></td>
+            <td>Wasabi S3 (Seoul)</td>
+            <td>MinIO Mock</td>
+            <td>전자서명 문서, 첨부파일 보관</td>
+            <td>공개 버킷 설정 오류, Path Traversal, 악성 파일 업로드</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- 3. 격리 환경 모사 -->
+    <section id="sec-3">
+      <h2><span class="section-num">3</span> 내부 격리 모사 환경 구축 방안</h2>
+      <p>
+        외부 공용 인터넷과의 연결을 전면 차단(<code>internal: true</code>)하는 전용 Docker 브리지 네트워크를 구성하여 안전하고 재현 가능한 테스트베드를 배포합니다.
+      </p>
+
+      <h3>격리 인프라 구성 파일 (<code>compose.simulation-env.yml</code>)</h3>
+      <pre><code>version: '3.8'
+
+networks:
+  edulinker-isolated-net:
+    driver: bridge
+    internal: true # 외부 인터넷 아웃바운드/인바운드 전면 차단
+  artex-mgmt-net:
+    driver: bridge # ARTEX의 LLM 호출 및 웹 UI 접속용 분리망
+
+services:
+  # 1. edulinker PostgreSQL 데이터베이스
+  edulinker-db:
+    image: postgres:16-alpine
+    networks:
+      - edulinker-isolated-net
+    environment:
+      POSTGRES_USER: edulinker
+      POSTGRES_PASSWORD: test_secure_password_123
+      POSTGRES_DB: edulinker
+
+  # 2. Redis 캐시
+  edulinker-redis:
+    image: redis:7-alpine
+    networks:
+      - edulinker-isolated-net
+
+  # 3. Wasabi S3 Mock (MinIO)
+  edulinker-s3-mock:
+    image: minio/minio:latest
+    networks:
+      - edulinker-isolated-net
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: mock_s3_admin
+      MINIO_ROOT_PASSWORD: mock_s3_password_123
+
+  # 4. 외부 알림 가상화 (Mailpit)
+  edulinker-mailpit:
+    image: axllent/mailpit:latest
+    networks:
+      - edulinker-isolated-net
+
+  # 5. edulinker Core Apps (Main Hub, Sendipass, API)
+  edulinker-app:
+    build:
+      context: /Users/nm/works/project2025/edulinker
+      dockerfile: Dockerfile.staging
+    networks:
+      - edulinker-isolated-net
+    environment:
+      NODE_ENV: test
+      DATABASE_URL: postgres://edulinker:test_secure_password_123@edulinker-db:5432/edulinker
+      REDIS_URL: redis://edulinker-redis:6379
+      S3_ENDPOINT: http://edulinker-s3-mock:9000
+      SMTP_HOST: edulinker-mailpit
+      SMTP_PORT: 1025
+    depends_on:
+      - edulinker-db
+      - edulinker-redis
+      - edulinker-s3-mock
+
+  # 6. ARTEX 자율 침투 테스트 엔진
+  artex-scanner:
+    image: ghcr.io/jiwoochris/artex-global:latest
+    networks:
+      - edulinker-isolated-net # 대상 시스템 침투용 내부망
+      - artex-mgmt-net         # 관리자 UI 및 LLM 통신용
+    ports:
+      - "127.0.0.1:8787:8787"
+    environment:
+      ARTEX_PG_DSN: postgres://artex:artexpass@artex-db:5432/artex?sslmode=disable
+      ARTEX_LANG: ko
+      OPENAI_API_KEY: ${OPENAI_API_KEY}</code></pre>
+
+      <h3>합성 테스트 데이터 및 계정 시드 풀</h3>
+      <ul>
+        <li><strong>Super Admin:</strong> <code>superadmin</code> / <code>superadmin2025</code> (시스템 최고 관리자)</li>
+        <li><strong>학교 관리자:</strong> <code>admin@yongmun.school</code> / <code>admin123</code> (용문초 관리자)</li>
+        <li><strong>교사 계정 풀:</strong> <code>teacher1@yongmun.school</code> ~ <code>teacher10</code></li>
+        <li><strong>학생 계정 풀:</strong> <code>student1@yongmun.school</code> ~ <code>student10</code></li>
+        <li><strong>학부모 계정 풀:</strong> <code>parent1@yongmun.school</code> ~ <code>parent10</code></li>
+      </ul>
+    </section>
+
+    <!-- 4. ARTEX 설정 -->
+    <section id="sec-4">
+      <h2><span class="section-num">4</span> ARTEX 침투 테스트 플랫폼 설정</h2>
+      <p>ARTEX의 LLM 멀티 에이전트가 최적의 진단 성능을 발휘할 수 있도록 타깃과 실행 옵션을 구성합니다.</p>
+      <ul>
+        <li><strong>타깃 등록 (In-Scope):</strong>
+          <code>http://edulinker-app:3000</code> (메인 허브),
+          <code>http://edulinker-app:3002</code> (Sendipass),
+          <code>http://edulinker-app:5173</code> (데스크톱 웹)
+        </li>
+        <li><strong>출력 언어:</strong> <code>ARTEX_LANG=ko</code> (취약점 리포트, PoC 요약, 조치 권고사항 국문 자동 생성)</li>
+        <li><strong>테스트 모드:</strong>
+          <ul>
+            <li><strong>블랙박스 (Black-box):</strong> 인증 정보 미보유 상태에서 정찰(Recon) 및 인증 전 취약점 점검</li>
+            <li><strong>그레이박스 (Gray-box):</strong> 학생/학부모/교사 JWT 토큰을 사전 주입하여 수평/수직 권한 상승 및 BOLA 점검</li>
+          </ul>
+        </li>
+      </ul>
+    </section>
+
+    <!-- 5. 점검 시나리오 -->
+    <section id="sec-5">
+      <h2><span class="section-num">5</span> 중점 침투 점검 시나리오</h2>
+
+      <div class="mermaid-box">
+        <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    participant A as ARTEX Agent
+    participant W as Main Hub / Sendipass
+    participant API as tRPC API Backend
+    participant DB as PostgreSQL (Prisma)
+
+    Note over A,DB: 시나리오 1: 인증 우회 및 수직 권한 상승 (BOLA/RBAC)
+    A->>W: 학생 계정(student1) 세션 획득
+    A->>API: 교사 전용 결재/가통 작성 tRPC 프로시저 호출
+    API->>API: RBAC 미들웨어 인가 검증
+    alt 권한 검증 누락
+        API->>DB: 불법 상태 변조 성공 (취약점 확인)
+        DB-->>A: 200 OK (ARTEX Critical Finding 기록)
+    else 권한 정상 차단
+        API-->>A: 403 Forbidden
+    end
+
+    Note over A,DB: 시나리오 2: Sendipass 학생 자격증명 노출 점검
+    A->>W: Sendipass 파라미터 Fuzzing (타 학생 ID 변조)
+    W->>API: Object ID 변조 요청 전송
+    API-->>A: 타 학생 비밀번호 노출 여부 점검 (IDOR 탐지)
+        </pre>
+      </div>
+
+      <h3>점검 영역별 세부 체크리스트</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>점검 영역</th>
+            <th>상세 점검 내용</th>
+            <th>예상 취약점</th>
+            <th>심각도</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>인증 및 인가 (Auth & RBAC)</strong></td>
+            <td>학생 세션으로 교사/관리자 전용 tRPC 프로시저 호출 시도, 타 학교 테넌트 데이터 접근 시도</td>
+            <td>BOLA, IDOR, 수평/수직 권한 상승</td>
+            <td><span class="pill pill-critical">Critical</span></td>
+          </tr>
+          <tr>
+            <td><strong>Sendipass 계정 배포</strong></td>
+            <td>학생 비밀번호 배포 파라미터 조작, 무차별 대입(Brute-force) 및 인증 전 자격증명 조회</td>
+            <td>자격증명 대량 탈취, 인증 우회</td>
+            <td><span class="pill pill-critical">Critical</span></td>
+          </tr>
+          <tr>
+            <td><strong>전자서명 (sign-school)</strong></td>
+            <td>타인의 서명 덮어쓰기, 위조된 서명 토큰 주입, 서명 문서 상태 강제 변경</td>
+            <td>서명 부인 방지 실패, 문서 변조</td>
+            <td><span class="pill pill-high">High</span></td>
+          </tr>
+          <tr>
+            <td><strong>API & 입력값 검증</strong></td>
+            <td>tRPC 파라미터 Zod 스키마 우회, Prisma <code>$queryRaw</code> SQLi, XSS 페이로드 주입</td>
+            <td>SQL Injection, Stored XSS</td>
+            <td><span class="pill pill-high">High</span></td>
+          </tr>
+          <tr>
+            <td><strong>파일 업로드 & 스토리지</strong></td>
+            <td>웹셸 확장자 우회 업로드, MinIO Path Traversal, 권한 없는 파일 직접 다운로드</td>
+            <td>RCE, 비인가 파일 열람</td>
+            <td><span class="pill pill-high">High</span></td>
+          </tr>
+          <tr>
+            <td><strong>실시간 통신 (Socket.IO)</strong></td>
+            <td>비인가 채널/Room 임의 Join, 웹소켓 패킷 변조 및 실시간 메시지 도청</td>
+            <td>WebSocket Hijacking, 메시지 유출</td>
+            <td><span class="pill pill-medium">Medium</span></td>
+          </tr>
+          <tr>
+            <td><strong>민감정보 노출 (PII)</strong></td>
+            <td>API 응답 내 불필요한 주민번호/전화번호 포함 여부, 에러 시 스택트레이스 노출</td>
+            <td>개인정보보호법 위반, 정보 누출</td>
+            <td><span class="pill pill-medium">Medium</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- 6. 안전 통제 -->
+    <section id="sec-6">
+      <h2><span class="section-num">6</span> 안전 통제 및 리스크 관리 대책</h2>
+      <ul>
+        <li><strong>네트워크 100% 격리:</strong> Docker 네트워크 옵션 <code>internal: true</code> 적용으로 외부 인터넷 유출 절대 차단</li>
+        <li><strong>원클릭 롤백 스크립트:</strong> 침투 공격 중 DB 파손 시 즉시 원복:
+          <pre><code>docker compose -f compose.simulation-env.yml exec edulinker-app pnpm db:reset --force</code></pre>
+        </li>
+        <li><strong>비용 및 토큰 통제:</strong> ARTEX의 일일 LLM 토큰 상한선을 설정하여 예기치 않은 과금 방지</li>
+      </ul>
+    </section>
+
+    <!-- 7. 로드맵 -->
+    <section id="sec-7">
+      <h2><span class="section-num">7</span> 단계별 추진 로드맵 & 일정</h2>
+
+      <div class="mermaid-box">
+        <pre class="mermaid">
+gantt
+    title edulinker 모사 환경 구축 및 ARTEX 침투 테스트 일정
+    dateFormat  YYYY-MM-DD
+    section 1. 인프라 구축
+    모사 환경 Dockerfile & Compose 작성     :2026-10-19, 2d
+    외부 의존성(S3/Firebase/SMTP) Mocking   :2026-10-21, 2d
+    합성 테스트 데이터 및 계정 Seed 생성    :2026-10-22, 1d
+    section 2. ARTEX 진단
+    ARTEX 환경 설정 및 타깃 인벤토리 등록   :2026-10-23, 1d
+    1차 블랙박스 침투 테스트 (비인가 관점)  :2026-10-24, 2d
+    2차 그레이박스 침투 테스트 (RBAC/IDOR) :2026-10-26, 2d
+    section 3. 조치 및 출시 검증
+    발견 취약점 긴급 패치 및 코드 수정      :2026-10-28, 3d
+    ARTEX 재진단 (Regression Testing)       :2026-10-31, 1d
+    최종 보안성 검토 및 릴리스 승인         :2026-11-01, 1d
+        </pre>
+      </div>
+    </section>
+
+    <!-- 8. 산출물 및 출시 게이트 -->
+    <section id="sec-8">
+      <h2><span class="section-num">8</span> 최종 산출물 및 릴리스 게이트(Release Gate) 기준</h2>
+      <div class="callout callout-danger">
+        <strong>🚦 정식 릴리스 차단(Release Gate) 필수 통과 기준</strong>
+        <ul>
+          <li><strong>Critical / High 등급 취약점:</strong> <strong>0건</strong> (전원 조치 필수, 잔여 시 출시 즉각 보류)</li>
+          <li><strong>Sendipass / 전자서명 / 계정 API:</strong> 인증 및 인가 검증 100% 통과 입증</li>
+          <li><strong>Medium 등급 취약점:</strong> 원칙적 수정 완료 또는 출시 후 7일 이내 보완 승인서 제출</li>
+        </ul>
+      </div>
+      <h3>최종 제출 산출물 목록</h3>
+      <ol>
+        <li><strong>ARTEX 자율 침투 테스트 종합 진단 보고서 (PDF/HTML)</strong>: 취약점 목록, CVSS 평가, 재현 PoC, 조치 가이드</li>
+        <li><strong>취약점 패치 및 코드 검증 내역서 (Pull Request & Test Evidence)</strong></li>
+        <li><strong>보안성 심의 통과 승인서 (Security Sign-off)</strong></li>
+      </ol>
+    </section>
+
+    <footer>
+      <p>본 계획서는 <strong>edulinker-project</strong> 사전 보안성 검증을 위해 <strong>ARTEX 글로벌판</strong> 환경에 맞추어 생성되었습니다.</p>
+      <p>© 2026 edulinker & ARTEX Security Assessment Team. All rights reserved.</p>
+    </footer>
+  </div>
+</div>
+
+</body>
+</html>
